@@ -11,12 +11,8 @@ buildscript {
     }
 }
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
+// Repositories are now declared in settings.gradle via dependencyResolutionManagement
+// This is the modern Gradle 7+ approach
 
 task clean(type: Delete) {
     delete rootProject.buildDir
