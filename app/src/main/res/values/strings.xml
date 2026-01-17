@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Eink Reader</string>
+    <string name="page_indicator">Page 1 / 1</string>
+    <string name="page_content">Article page content</string>
+    <string name="select_image">Select Image</string>
+</resources>
