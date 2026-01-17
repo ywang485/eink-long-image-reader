@@ -13,7 +13,14 @@ An Android app specifically designed for reading long article images on eink tab
 
 ## Installation
 
-### Option 1: Build from Source
+### Option 1: Download Pre-built APK (Easiest)
+
+1. Go to the [Releases](../../releases) page
+2. Download the latest `app-debug.apk` or `app-release.apk`
+3. Transfer to your device and install
+4. Grant storage permissions when prompted
+
+### Option 2: Build from Source
 
 1. Clone this repository:
    ```bash
@@ -21,18 +28,21 @@ An Android app specifically designed for reading long article images on eink tab
    cd eink-long-image-reader
    ```
 
-2. Open the project in Android Studio
+2. Generate Gradle wrapper (first time only):
+   ```bash
+   gradle wrapper --gradle-version 8.1.1
+   ```
 
-3. Build and install:
+3. Open the project in Android Studio
+
+4. Build and install:
    - Connect your Android device or start an emulator
    - Click "Run" in Android Studio or use:
    ```bash
    ./gradlew installDebug
    ```
 
-### Option 2: Install APK
-
-Download the latest APK from the [Releases](../../releases) page and install it on your device.
+See [SETUP.md](SETUP.md) for detailed setup instructions and [BUILD.md](BUILD.md) for creating releases.
 
 ## Usage
 
