@@ -9,7 +9,7 @@ Before you can build the app locally or have GitHub Actions build it, you need t
 If you have Gradle installed on your machine:
 
 ```bash
-gradle wrapper --gradle-version 8.1.1
+gradle wrapper --gradle-version 8.5
 ```
 
 This will generate `gradle/wrapper/gradle-wrapper.jar`.

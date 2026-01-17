@@ -30,7 +30,7 @@ An Android app specifically designed for reading long article images on eink tab
 
 2. Generate Gradle wrapper (first time only):
    ```bash
-   gradle wrapper --gradle-version 8.1.1
+   gradle wrapper --gradle-version 8.5
    ```
 
 3. Open the project in Android Studio
