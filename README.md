@@ -183,12 +183,10 @@ This project is open source and available under the [MIT License](LICENSE).
 
 Potential features to add:
 - Bookmark specific pages
-- Zoom functionality for detailed viewing
-- Dark mode for regular displays
+- Go to a specific page
 - Adjust page overlap for context
 - Image brightness/contrast controls
 - Multiple image library management
-- Export reading progress
 
 ## Credits
 
