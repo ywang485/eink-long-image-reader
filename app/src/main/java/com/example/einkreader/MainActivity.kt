@@ -1,16 +1,21 @@
 package com.example.einkreader
 
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
 import android.net.Uri
 import android.os.Bundle
 import android.util.DisplayMetrics
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageView
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -23,6 +28,19 @@ class MainActivity : AppCompatActivity() {
     private lateinit var selectImageButton: Button
     private lateinit var leftTouchArea: View
     private lateinit var rightTouchArea: View
+    private lateinit var goToPageButton: Button
+    private lateinit var settingsButton: Button
+    private lateinit var controlsPanel: View
+
+    // Image controls
+    private lateinit var overlapSeekBar: SeekBar
+    private lateinit var overlapValue: TextView
+    private lateinit var brightnessSeekBar: SeekBar
+    private lateinit var brightnessValue: TextView
+    private lateinit var contrastSeekBar: SeekBar
+    private lateinit var contrastValue: TextView
+    private lateinit var invertColorButton: Button
+    private lateinit var resetImageButton: Button
 
     private lateinit var prefs: SharedPreferences
 
@@ -35,10 +53,20 @@ class MainActivity : AppCompatActivity() {
     private var screenHeight = 0
     private var screenWidth = 0
 
+    // Image adjustment settings
+    private var pageOverlapPercent = 0
+    private var brightness = 100f
+    private var contrast = 100f
+    private var isColorInverted = false
+
     companion object {
         private const val PREFS_NAME = "EinkReaderPrefs"
         private const val KEY_LAST_PAGE_PREFIX = "last_page_"
         private const val KEY_LAST_IMAGE_URI = "last_image_uri"
+        private const val KEY_PAGE_OVERLAP = "page_overlap"
+        private const val KEY_BRIGHTNESS = "brightness"
+        private const val KEY_CONTRAST = "contrast"
+        private const val KEY_INVERT_COLOR = "invert_color"
         private const val REQUEST_CODE_SELECT_IMAGE = 1001
     }
 
@@ -66,14 +94,202 @@ class MainActivity : AppCompatActivity() {
         selectImageButton = findViewById(R.id.selectImageButton)
         leftTouchArea = findViewById(R.id.leftTouchArea)
         rightTouchArea = findViewById(R.id.rightTouchArea)
+        goToPageButton = findViewById(R.id.goToPageButton)
+        settingsButton = findViewById(R.id.settingsButton)
+        controlsPanel = findViewById(R.id.controlsPanel)
+
+        // Image controls
+        overlapSeekBar = findViewById(R.id.overlapSeekBar)
+        overlapValue = findViewById(R.id.overlapValue)
+        brightnessSeekBar = findViewById(R.id.brightnessSeekBar)
+        brightnessValue = findViewById(R.id.brightnessValue)
+        contrastSeekBar = findViewById(R.id.contrastSeekBar)
+        contrastValue = findViewById(R.id.contrastValue)
+        invertColorButton = findViewById(R.id.invertColorButton)
+        resetImageButton = findViewById(R.id.resetImageButton)
 
         selectImageButton.setOnClickListener {
             openImageSelector()
         }
+
+        goToPageButton.setOnClickListener {
+            showGoToPageDialog()
+        }
+
+        settingsButton.setOnClickListener {
+            toggleControlsPanel()
+        }
+
+        setupImageControls()
+    }
+
+    private fun setupImageControls() {
+        // Page overlap control
+        overlapSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                pageOverlapPercent = progress
+                overlapValue.text = "$progress%"
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                prefs.edit().putInt(KEY_PAGE_OVERLAP, pageOverlapPercent).apply()
+                if (originalBitmap != null) {
+                    segmentImageIntoPages()
+                    currentPage = 0
+                    displayCurrentPage()
+                    Toast.makeText(this@MainActivity, "Pages regenerated with $pageOverlapPercent% overlap", Toast.LENGTH_SHORT).show()
+                }
+            }
+        })
+
+        // Brightness control
+        brightnessSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                brightness = progress.toFloat()
+                brightnessValue.text = "$progress"
+                applyImageFilters()
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                prefs.edit().putFloat(KEY_BRIGHTNESS, brightness).apply()
+            }
+        })
+
+        // Contrast control
+        contrastSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                contrast = progress.toFloat()
+                contrastValue.text = "$progress"
+                applyImageFilters()
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                prefs.edit().putFloat(KEY_CONTRAST, contrast).apply()
+            }
+        })
+
+        // Color invert button
+        invertColorButton.setOnClickListener {
+            isColorInverted = !isColorInverted
+            invertColorButton.text = if (isColorInverted) "Invert Colors: ON" else "Invert Colors: OFF"
+            prefs.edit().putBoolean(KEY_INVERT_COLOR, isColorInverted).apply()
+            applyImageFilters()
+        }
+
+        // Reset image adjustments button
+        resetImageButton.setOnClickListener {
+            brightness = 100f
+            contrast = 100f
+            isColorInverted = false
+            brightnessSeekBar.progress = 100
+            contrastSeekBar.progress = 100
+            invertColorButton.text = "Invert Colors: OFF"
+            prefs.edit()
+                .putFloat(KEY_BRIGHTNESS, brightness)
+                .putFloat(KEY_CONTRAST, contrast)
+                .putBoolean(KEY_INVERT_COLOR, isColorInverted)
+                .apply()
+            applyImageFilters()
+            Toast.makeText(this, "Image adjustments reset", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun toggleControlsPanel() {
+        if (controlsPanel.visibility == View.GONE) {
+            controlsPanel.visibility = View.VISIBLE
+            settingsButton.text = "Hide Settings"
+        } else {
+            controlsPanel.visibility = View.GONE
+            settingsButton.text = "Settings"
+        }
+    }
+
+    private fun showGoToPageDialog() {
+        if (totalPages == 0) {
+            Toast.makeText(this, "Please load an image first", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val input = EditText(this)
+        input.hint = "Enter page number (1-$totalPages)"
+        input.inputType = android.text.InputType.TYPE_CLASS_NUMBER
+
+        AlertDialog.Builder(this)
+            .setTitle("Go to Page")
+            .setMessage("Enter page number:")
+            .setView(input)
+            .setPositiveButton("Go") { _, _ ->
+                val pageStr = input.text.toString()
+                try {
+                    val page = pageStr.toInt()
+                    if (page in 1..totalPages) {
+                        currentPage = page - 1
+                        displayCurrentPage()
+                    } else {
+                        Toast.makeText(this, "Page must be between 1 and $totalPages", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: NumberFormatException) {
+                    Toast.makeText(this, "Please enter a valid number", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun applyImageFilters() {
+        val colorMatrix = ColorMatrix()
+
+        // Apply brightness and contrast
+        val brightnessValue = (brightness - 100) / 100f * 255f
+        val contrastValue = contrast / 100f
+
+        val scale = contrastValue
+        val translate = brightnessValue
+
+        colorMatrix.set(floatArrayOf(
+            scale, 0f, 0f, 0f, translate,
+            0f, scale, 0f, 0f, translate,
+            0f, 0f, scale, 0f, translate,
+            0f, 0f, 0f, 1f, 0f
+        ))
+
+        // Apply color inversion if enabled
+        if (isColorInverted) {
+            val invertMatrix = ColorMatrix(floatArrayOf(
+                -1f, 0f, 0f, 0f, 255f,
+                0f, -1f, 0f, 0f, 255f,
+                0f, 0f, -1f, 0f, 255f,
+                0f, 0f, 0f, 1f, 0f
+            ))
+            colorMatrix.postConcat(invertMatrix)
+        }
+
+        imageView.colorFilter = ColorMatrixColorFilter(colorMatrix)
     }
 
     private fun initPreferences() {
         prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+        // Load saved settings
+        pageOverlapPercent = prefs.getInt(KEY_PAGE_OVERLAP, 0)
+        brightness = prefs.getFloat(KEY_BRIGHTNESS, 100f)
+        contrast = prefs.getFloat(KEY_CONTRAST, 100f)
+        isColorInverted = prefs.getBoolean(KEY_INVERT_COLOR, false)
+
+        // Update UI with saved values
+        overlapSeekBar.progress = pageOverlapPercent
+        overlapValue.text = "$pageOverlapPercent%"
+        brightnessSeekBar.progress = brightness.toInt()
+        brightnessValue.text = brightness.toInt().toString()
+        contrastSeekBar.progress = contrast.toInt()
+        contrastValue.text = contrast.toInt().toString()
+        invertColorButton.text = if (isColorInverted) "Invert Colors: ON" else "Invert Colors: OFF"
 
         // Try to load last opened image
         val lastImageUri = prefs.getString(KEY_LAST_IMAGE_URI, null)
@@ -176,22 +392,37 @@ class MainActivity : AppCompatActivity() {
             val scaleFactor = screenWidth.toFloat() / imageWidth.toFloat()
             val scaledHeight = (imageHeight * scaleFactor).toInt()
 
-            // Available height for content (excluding status bar)
+            // Available height for content (excluding status bar and controls)
             val statusBarHeight = 100 // Approximate height of status bar in pixels
             val availableHeight = screenHeight - statusBarHeight
 
+            // Calculate overlap in pixels (in original image coordinates)
+            val overlapPixels = (availableHeight * pageOverlapPercent / 100.0 / scaleFactor).toInt()
+
+            // Effective page height considering overlap
+            val effectivePageHeight = (availableHeight / scaleFactor).toInt() - overlapPixels
+
             // Calculate number of pages needed
-            totalPages = Math.ceil(scaledHeight.toDouble() / availableHeight.toDouble()).toInt()
+            val pagesNeeded = if (effectivePageHeight > 0) {
+                Math.ceil((imageHeight - overlapPixels).toDouble() / effectivePageHeight.toDouble()).toInt()
+            } else {
+                Math.ceil(scaledHeight.toDouble() / availableHeight.toDouble()).toInt()
+            }
 
             // Create bitmap for each page
-            for (pageIndex in 0 until totalPages) {
-                val startY = (pageIndex * availableHeight / scaleFactor).toInt()
+            for (pageIndex in 0 until pagesNeeded) {
+                val startY = if (pageOverlapPercent > 0 && effectivePageHeight > 0) {
+                    pageIndex * effectivePageHeight
+                } else {
+                    (pageIndex * availableHeight / scaleFactor).toInt()
+                }
+
                 val pageHeight = Math.min(
                     (availableHeight / scaleFactor).toInt(),
                     imageHeight - startY
                 )
 
-                if (pageHeight > 0) {
+                if (pageHeight > 0 && startY < imageHeight) {
                     try {
                         val pageBitmap = Bitmap.createBitmap(
                             bitmap,
@@ -214,6 +445,7 @@ class MainActivity : AppCompatActivity() {
     private fun displayCurrentPage() {
         if (currentPage < pageBitmaps.size) {
             imageView.setImageBitmap(pageBitmaps[currentPage])
+            applyImageFilters()
             updatePageIndicator()
             saveCurrentPagePosition()
         }
