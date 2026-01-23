@@ -5,11 +5,18 @@ An Android app specifically designed for reading long article images on eink tab
 ## Features
 
 - **Smart Pagination**: Automatically segments long images into pages based on your device's screen size
+- **Adjustable Page Overlap**: Configure overlap between pages (0-30%) for better reading context
 - **Tap Navigation**: Navigate between pages by tapping the left (previous) or right (next) side of the screen
+- **Go to Specific Page**: Jump directly to any page number
 - **Position Memory**: Automatically remembers which page you were on for each image
+- **Image Adjustments**:
+  - **Color Inversion**: Toggle between normal and inverted colors for better readability
+  - **Brightness Control**: Adjust image brightness (0-200%)
+  - **Contrast Control**: Adjust image contrast (0-200%)
 - **Eink Optimized**: Designed to minimize screen refreshes and avoid scrolling on eink displays
 - **File Picker Integration**: Easily open any image from your device storage
 - **Persistent Access**: Maintains access to previously opened images across app sessions
+- **Settings Persistence**: All adjustments and preferences are saved across app sessions
 
 ## Installation
 
@@ -50,6 +57,40 @@ Download the latest APK from the [Releases](../../releases) page and install it 
 - **Tap the right side** of the screen to go to the next page
 - **Tap the left side** of the screen to go to the previous page
 - **Page indicator** at the bottom shows current page and total pages
+- **Go to Page button**: Click to open a dialog where you can enter a specific page number to jump to
+
+### Image Adjustments
+
+The app includes powerful image adjustment controls accessible via the **Settings** button:
+
+1. **Page Overlap Control**:
+   - Adjust overlap between pages from 0% to 30%
+   - Higher overlap provides more context when turning pages
+   - Changes take effect immediately and regenerate all pages
+   - Useful for ensuring you don't miss content between page breaks
+
+2. **Brightness Control**:
+   - Range: 0-200 (default: 100)
+   - Lower values darken the image
+   - Higher values brighten the image
+   - Ideal for adjusting visibility on different eink screens
+
+3. **Contrast Control**:
+   - Range: 0-200 (default: 100)
+   - Lower values reduce contrast
+   - Higher values increase contrast
+   - Helps improve text readability
+
+4. **Color Inversion**:
+   - Toggle between normal and inverted colors
+   - Useful for white-text-on-dark-background images
+   - Can reduce eye strain on some eink devices
+
+5. **Reset Button**:
+   - Quickly restore all image adjustments to defaults
+   - Does not affect page overlap settings
+
+All settings are automatically saved and restored when you reopen the app.
 
 ### Position Memory
 
@@ -58,6 +99,7 @@ Download the latest APK from the [Releases](../../releases) page and install it 
   - You switch to another app
   - You close the app
 - When you reopen the same image, it will resume from where you left off
+- Position is tracked separately for each image
 
 ### Opening Images from Other Apps
 
@@ -99,6 +141,13 @@ The app registers as a handler for image files, so you can:
 
 ## Configuration
 
+### Page Overlap
+
+Adjust page overlap directly from the app's Settings panel (0-30%). This is useful for:
+- Ensuring continuity when reading long articles
+- Preventing content from being cut off at page boundaries
+- Providing reading context when turning pages
+
 ### Adjusting Status Bar Height
 
 If the page segmentation doesn't perfectly match your screen, you can adjust the status bar height in `MainActivity.kt`:
@@ -115,6 +164,10 @@ The app is configured for portrait mode by default. To change this, edit `Androi
 android:screenOrientation="portrait"  <!-- Change to "landscape" if needed -->
 ```
 
+### Image Adjustments
+
+All image adjustments (brightness, contrast, color inversion) can be configured via the Settings panel and are automatically saved for future sessions.
+
 ## Troubleshooting
 
 ### Images Not Loading
@@ -127,11 +180,23 @@ android:screenOrientation="portrait"  <!-- Change to "landscape" if needed -->
 
 - The app uses approximate calculations for the status bar
 - Adjust `statusBarHeight` in MainActivity.kt for your device
+- Try adjusting the page overlap to fine-tune page breaks
 
 ### App Doesn't Remember Position
 
 - Ensure the app has permission to access the file
 - Use "Select Image" button instead of sharing from other apps for persistent access
+
+### Image Too Dark or Washed Out
+
+- Open Settings and adjust Brightness and Contrast controls
+- For dark background images, try the "Invert Colors" toggle
+- Use the "Reset Image Adjustments" button to restore defaults
+
+### Settings Panel Not Visible
+
+- Tap the "Settings" button in the bottom bar to show/hide the controls panel
+- The panel will appear above the status bar when visible
 
 ## Development
 
@@ -183,10 +248,10 @@ This project is open source and available under the [MIT License](LICENSE).
 
 Potential features to add:
 - Bookmark specific pages
-- Go to a specific page
-- Adjust page overlap for context
-- Image brightness/contrast controls
 - Multiple image library management
+- Zoom and pan functionality
+- Text extraction and search
+- Sharing specific pages
 
 ## Credits
 
