@@ -204,9 +204,15 @@ class MainActivity : AppCompatActivity() {
         if (controlsPanel.visibility == View.GONE) {
             controlsPanel.visibility = View.VISIBLE
             settingsButton.text = "Hide Settings"
+            // Disable touch areas when controls are visible to prevent interfering with controls
+            leftTouchArea.visibility = View.GONE
+            rightTouchArea.visibility = View.GONE
         } else {
             controlsPanel.visibility = View.GONE
             settingsButton.text = "Settings"
+            // Re-enable touch areas when controls are hidden
+            leftTouchArea.visibility = View.VISIBLE
+            rightTouchArea.visibility = View.VISIBLE
         }
     }
 
