@@ -18,9 +18,10 @@ build/
 
 # Gradle files
 .gradle/
-gradle/
-gradlew
-gradlew.bat
+# Keep gradle wrapper files
+!gradle/wrapper/
+!gradlew
+!gradlew.bat
 
 # Local configuration file (sdk path, etc)
 local.properties
